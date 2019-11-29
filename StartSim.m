@@ -24,36 +24,42 @@
 % 　モータ摩擦(毎回のシミュレーションでランダムに変更)
 
 %% 全体繰り返し
-for index = 1:1000
+for index = 1054:1500
 
     %% パラメータ設定
 
+    rng('shuffle'); %ランダムシードの現在時刻を利用したシャッフル
     %電源電圧
     DCVoltage = 100;
     %アンプのパラメータ
     AmpCarryFreq = 20e3;%PWMのキャリア周波数
+    Ts = 1e-6; %ホワイトノイズのサンプル周期
 
-    MotInertia = 10*rand()*1e-3;
-    MotVisco = rand()*1e-6;
-    MotPole = 20; %極数20
+    MotInertia = 0.1*rand()*1e-3;
+    MotVisco = 0.01*rand()*1e-6;
+    MotPole = 1; %極数20
 
-    CurNoise = 1e-9;
-    CurOfsError_U = 0.5 * rand();%電圧[V]
-    CurOfsError_V = 0.5 * rand();%電圧[V]
-    CurOfsError_W = 0.5 * rand();%電圧[V]
+    MotPhaseR = 0.001 + 10 * rand();
+    MotPhaseL = (0.001 + 10 * rand())*1e-3;
+    MotKV = 0.01 + 50 * rand();
+
+    VoltAmp = 10;
+
+    SignaltoNoise = 1000;
+    AmpSignal = VoltAmp / MotPhaseR;
+    AmpNoise = AmpSignal/SignaltoNoise;% 電流ノイズのピーク値[A]
+    
+    CurOfsError_U = AmpNoise * rand();
+    CurOfsError_V = AmpNoise * rand();
+    CurOfsError_W = AmpNoise * rand();
 
     CurGainError_U = 1 + 0.2*(rand() - 0.5);
     CurGainError_V = 1 + 0.2*(rand() - 0.5);
     CurGainError_W = 1 + 0.2*(rand() - 0.5);
 
-    ElecAngNoise = 1e-9;
-    ElecAngOfsError = pi*2.0*(rand() - 0.5);
+    ElecAngNoise = 0.01;% 角度ノイズのピーク値[rad]
+    ElecAngOfsError = pi * 2.0 * (rand() - 0.5);
 
-    MotPhaseR = 0.01 + 100 * rand();
-    MotPhaseL = 0.01 + 100 * rand();
-    MotKV = 0.1 + 1000 * rand();
-
-    VoltAmp = 5;
     qVoltIn = ...
         [  0  VoltAmp; 0.1  VoltAmp;...
          0.1 -VoltAmp; 0.2 -VoltAmp;...
@@ -76,13 +82,18 @@ for index = 1:1000
         ];
 
     %% シミュレーション実施
-    tic;
+    tic
+    disp(['index : ' num2str(index) ' start...']);
     out = sim('VectorControl003');
-    toc;
+    disp(['index : ' num2str(index) ' ...end']);
+    toc
 
     %% データ保存
     Savedata(out, index, MotPhaseR, MotPhaseL, MotKV,...
              CurGainError_U, CurGainError_V, CurGainError_W,...
              CurOfsError_U, CurOfsError_V, CurOfsError_W,...
              ElecAngOfsError)
+
+    %% 後始末
+    clear all;
 end
