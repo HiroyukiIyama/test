@@ -13,7 +13,7 @@
 
 %% 全体繰り返し
 clear all;
-for loop = 1:5
+for loop = 3:4
     IndexNum = 200; %時系列データ200セットで約100MByte
     for index = 1:IndexNum
         rng('shuffle'); %ランダムシードの現在時刻を利用したシャッフル
@@ -53,10 +53,10 @@ for loop = 1:5
 
         %公称電圧
         VNorm = MotorSpec(randum_index,3);
-        %マクソンはΩで端子間抵抗が規定される
-        MotPhaseR = MotorSpec(randum_index,12);
-        %マクソンはmHで端子間インダクタンスが規定されるため1e-3をかけてHに変換する
-        MotPhaseL = MotorSpec(randum_index,13) * 1e-3;
+        %マクソンは端子間抵抗[Ω]で規定されるため1/2をかけて相間抵抗に返還する
+        MotPhaseR = MotorSpec(randum_index,12) / 2;
+        %マクソンは端子間インダクタンス[mH]で規定されるため1e-3および1/2をかけて相間インダクタンス[H]に変換する
+        MotPhaseL = MotorSpec(randum_index,13) * 1e-3 / 2;
         %モータ端子間電圧の単位変換、換算
         MotKV = 1 / MotorSpec(randum_index,15); % 単位変換 rpm/V →　V/rpm
         MotKV = 1000 * MotKV;                   % 単位変換 V/rpm →　V/krpm
